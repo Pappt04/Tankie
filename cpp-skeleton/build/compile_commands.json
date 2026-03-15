@@ -1,0 +1,26 @@
+[
+{
+  "directory": "/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/build",
+  "command": "/usr/bin/c++ -DASIO_STANDALONE -I/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/asio-1.36.0/include -std=gnu++17 -o CMakeFiles/tankie_client.dir/client.cpp.o -c /home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/client.cpp",
+  "file": "/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/client.cpp",
+  "output": "CMakeFiles/tankie_client.dir/client.cpp.o"
+},
+{
+  "directory": "/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/build",
+  "command": "/usr/bin/c++ -DASIO_STANDALONE -I/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/asio-1.36.0/include -std=gnu++17 -o CMakeFiles/tankie_client.dir/json_parser.cpp.o -c /home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/json_parser.cpp",
+  "file": "/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/json_parser.cpp",
+  "output": "CMakeFiles/tankie_client.dir/json_parser.cpp.o"
+},
+{
+  "directory": "/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/build",
+  "command": "/usr/bin/c++ -DASIO_STANDALONE -I/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/asio-1.36.0/include -std=gnu++17 -o CMakeFiles/tankie_client.dir/main.cpp.o -c /home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/main.cpp",
+  "file": "/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/main.cpp",
+  "output": "CMakeFiles/tankie_client.dir/main.cpp.o"
+},
+{
+  "directory": "/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/build",
+  "command": "/usr/bin/c++ -DASIO_STANDALONE -I/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/asio-1.36.0/include -std=gnu++17 -o CMakeFiles/tankie_client.dir/websocket.cpp.o -c /home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/websocket.cpp",
+  "file": "/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/websocket.cpp",
+  "output": "CMakeFiles/tankie_client.dir/websocket.cpp.o"
+}
+]

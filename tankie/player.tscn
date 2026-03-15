@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://bnu5e2fogj5g6"]
+
+[ext_resource type="Script" uid="uid://drxp1n00cv4n8" path="res://logic/Player.cs" id="1_scr"]
+[ext_resource type="Texture2D" uid="uid://dwqtvjsta6qph" path="res://resources/icon.svg" id="2_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
+size = Vector2(128, 128)
+
+[node name="Player" type="CharacterBody2D" unique_id=1980924845]
+script = ExtResource("1_scr")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=234462542]
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2048424050]
+shape = SubResource("RectangleShape2D_player")

@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://beppk21aaq4ot"]
+
+[ext_resource type="Script" uid="uid://bhvrh3fjg6qng" path="res://logic/GameManager.cs" id="1_mgr"]
+
+[node name="Main" type="Node2D" unique_id=349389255]
+script = ExtResource("1_mgr")

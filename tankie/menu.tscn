@@ -1,0 +1,61 @@
+[gd_scene format=3 uid="uid://be2o7nq8nt5po"]
+
+[ext_resource type="Script" uid="uid://dvinrm40mefnb" path="res://logic/Menu.cs" id="1_scr"]
+
+[node name="Menu" type="Control" unique_id=2037086564]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_scr")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1541949518]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.121569, 0.121569, 0.121569, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=272200629]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -200.0
+offset_right = 200.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="VBoxContainer" unique_id=1527617985]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "Tankie Multiplayer"
+horizontal_alignment = 1
+
+[node name="Instructions" type="Label" parent="VBoxContainer" unique_id=831394482]
+layout_mode = 2
+text = "Connect via WebSocket! Send payload:
+{\"action\":\"join\",\"tankId\":\"player1\"}"
+horizontal_alignment = 1
+
+[node name="PlayersLabel" type="Label" parent="VBoxContainer" unique_id=1969527335]
+layout_mode = 2
+text = "Connected Players:
+None"
+horizontal_alignment = 1
+
+[node name="StartButton" type="Button" parent="VBoxContainer" unique_id=1800102715]
+custom_minimum_size = Vector2(200, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 24
+text = "Start Game"

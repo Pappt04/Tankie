@@ -1,0 +1,7 @@
+-I/usr/local/include
+-I/websocketpp/
+-I/asio/include
+-std=c++17
+-Wall
+-D_WEBSOCKETPP_CPP11_STL_
+-DASIO_STANDALONE

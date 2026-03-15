@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/tankie_client.dir/client.cpp.o CMakeFiles/tankie_client.dir/json_parser.cpp.o CMakeFiles/tankie_client.dir/main.cpp.o CMakeFiles/tankie_client.dir/websocket.cpp.o -o tankie_client 

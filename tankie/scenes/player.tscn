@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://logic/Player.cs" id="1_scr"]
+[ext_resource type="Texture2D" path="res://resources/blue_tank_body.png" id="2_body"]
+[ext_resource type="Texture2D" path="res://resources/blue_tank_turret.png" id="3_turret"]
+[ext_resource type="Texture2D" path="res://resources/turret_fire.png" id="4_fire"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
+size = Vector2(64, 64)
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("1_scr")
+
+[node name="Body" type="Sprite2D" parent="."]
+texture = ExtResource("2_body")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_player")
+
+[node name="Turret" type="Node2D" parent="."]
+
+[node name="TurretSprite" type="Sprite2D" parent="Turret"]
+texture = ExtResource("3_turret")
+
+[node name="TurretFire" type="Sprite2D" parent="Turret"]
+visible = false
+texture = ExtResource("4_fire")
+
+[node name="Muzzle" type="Marker2D" parent="Turret"]
+position = Vector2(100, 0)
