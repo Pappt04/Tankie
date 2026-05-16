@@ -48,9 +48,6 @@ int main() {
       const std::string msg = ws::read_frame(sock);
       dispatch(msg, state);
 
-      if (state.game_over())
-        break;
-
       if (state.is_my_turn()) {
         const std::string actions = decide_actions(state);
         std::cout << "[action] sending: " << actions << "\n";

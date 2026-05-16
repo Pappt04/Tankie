@@ -37,6 +37,10 @@ public:
   void handle_map(int grid_width, int grid_height, int grid_size,
                   const std::vector<Wall> &walls,
                   const std::vector<std::pair<std::string, std::pair<int,int>>> &players) {
+    game_over_    = false;
+    game_started_ = false;
+    tanks_.clear();
+
     grid_width_  = grid_width;
     grid_height_ = grid_height;
     grid_size_   = grid_size;

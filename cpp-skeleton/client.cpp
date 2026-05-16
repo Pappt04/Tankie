@@ -90,7 +90,10 @@ void dispatch(const std::string &json, GameState &state) {
   } else if (event == "game_over") {
     const std::string winner = JsonParser::extractString(json, "winner");
     state.handle_game_over(winner);
-    std::cout << "[game] over – winner: " << winner << "\n";
+    if (winner.empty())
+      std::cout << "[game] Draw! Waiting for next round...\n";
+    else
+      std::cout << "[game] " << winner << " wins! Waiting for next round...\n";
 
   } else {
     std::cout << "[unknown event] " << json << "\n";
