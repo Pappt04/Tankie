@@ -1,3 +1,0 @@
-/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/build/CMakeFiles/tankie_client.dir
-/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/build/CMakeFiles/edit_cache.dir
-/home/papp/Documents/codes/games/bolyai-tankie/cpp-skeleton/build/CMakeFiles/rebuild_cache.dir
