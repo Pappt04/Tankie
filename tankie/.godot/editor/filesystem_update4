@@ -1,8 +1,0 @@
-res://logic/Bullet.cs
-res://logic/Wall.cs
-res://logic/Tank.cs
-res://logic/Player.cs
-res://logic/Menu.cs
-res://logic/GameManager.cs
-res://logic/GlobalState.cs
-res://logic/GameServer.cs
