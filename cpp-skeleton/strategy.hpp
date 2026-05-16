@@ -15,57 +15,27 @@
  * The client wraps it in: {"tankId":"…","actions":[…]}
  */
 
+#include "actions.hpp"
 #include "game_state.hpp"
-
+#include <array>
 #include <cstdlib>
 #include <string>
-#include <array>
-
-// ------------------------------------------------------------------ //
-// Small helpers for building action JSON without a heavy dependency
-// ------------------------------------------------------------------ //
-namespace actions {
-
-inline std::string move(const std::string& direction) {
-    return R"({"type":"move","direction":")" + direction + R"("})";
-}
-
-inline std::string rotate(int degrees) {
-    return R"({"type":"rotate","degrees":)" + std::to_string(degrees) + "}";
-}
-
-inline std::string shoot() {
-    return R"({"type":"shoot"})";
-}
-
-} // namespace actions
 
 // ------------------------------------------------------------------ //
 // decide_actions – replace the body with your own strategy
 // ------------------------------------------------------------------ //
+inline std::string decide_actions(const GameState &state) {
+  // TODO: replace the random strategy below with your own logic.
+  (void)state; // remove when you start using state
 
-/**
- * Return a JSON array string containing the actions to execute this turn.
- * Respect the budget or the server will reject the command.
- */
-inline std::string decide_actions(const GameState& state) {
-    // TODO: replace the random strategy below with your own logic.
-    (void)state; // remove when you start using state
+  int rand_degrees = std::rand() % 360;
+  const std::string &rand_dir =
+      actions::directions[std::rand() % actions::directions.size()];
 
-    static const std::array<std::string, 4> directions = {
-        "up", "down", "left", "right"
-    };
+  // Rotate (free) + move (1 budget) + shoot (1 budget) = 2 budget units used
+  std::string action_array = "[" + actions::rotate(rand_degrees) + "," +
+                             actions::move(rand_dir) + "," + actions::shoot() +
+                             "]";
 
-    int rand_degrees   = std::rand() % 360;
-    const std::string& rand_dir = directions[std::rand() % directions.size()];
-
-    // Rotate (free) + move (1 budget) + shoot (1 budget) = 2 budget units used
-    std::string action_array =
-        "[" +
-        actions::rotate(rand_degrees) + "," +
-        actions::move(rand_dir)       + "," +
-        actions::shoot()              +
-        "]";
-
-    return action_array;
+  return action_array;
 }

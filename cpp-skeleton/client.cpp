@@ -6,12 +6,6 @@
  *
  * Make sure the Godot game is running and showing the Menu screen before
  * connecting.  Press "Start" in-game once all players have joined.
- *
- * NOTE: websocketpp-0.8.2 is not compatible with asio-1.36.0 (it relies on
- * io_service, resolver::iterator, strand::wrap, io_service::work and
- * expires_from_now, all of which were removed in asio 1.12+).
- * This file therefore implements the WebSocket protocol directly on top of
- * standalone Asio – the framing code is ~60 lines and fits in one file.
  */
 
 #include "client.hpp"
@@ -33,15 +27,15 @@ void dispatch(const std::string &json, GameState &state) {
     std::cout << "[lobby] " << tank_id << " joined\n";
 
   } else if (event == "map") {
-    const int grid_width  = JsonParser::extractInt(json, "gridWidth");
+    const int grid_width = JsonParser::extractInt(json, "gridWidth");
     const int grid_height = JsonParser::extractInt(json, "gridHeight");
-    const int grid_size   = JsonParser::extractInt(json, "gridSize");
+    const int grid_size = JsonParser::extractInt(json, "gridSize");
 
     std::vector<Wall> walls;
     for (const auto &obj : JsonParser::extractObjectArray(json, "walls")) {
       Wall w;
-      w.x           = JsonParser::extractInt(obj, "x");
-      w.y           = JsonParser::extractInt(obj, "y");
+      w.x = JsonParser::extractInt(obj, "x");
+      w.y = JsonParser::extractInt(obj, "y");
       w.orientation = JsonParser::extractString(obj, "orientation");
       walls.push_back(std::move(w));
     }
@@ -89,21 +83,25 @@ void dispatch(const std::string &json, GameState &state) {
 
   } else if (event == "turn_timeout") {
     const std::string tank_id = JsonParser::extractString(json, "tankId");
-    std::cout << "[timeout] " << tank_id << " timed out — turn skipped (1st warning)\n";
+    std::cout << "[timeout] " << tank_id
+              << " timed out — turn skipped (1st warning)\n";
 
   } else if (event == "turn_disqualified") {
     const std::string tank_id = JsonParser::extractString(json, "tankId");
     state.handle_turn_disqualified(tank_id);
-    std::cout << "[disqualified] " << tank_id << " timed out twice — eliminated\n";
+    std::cout << "[disqualified] " << tank_id
+              << " timed out twice — eliminated\n";
 
   } else if (event == "game_over") {
     const std::string winner = JsonParser::extractString(json, "winner");
     state.handle_game_over(winner);
     const int round = JsonParser::extractInt(json, "round");
     if (winner.empty())
-      std::cout << "[game] Draw! Round " << round << " | Waiting for next round...\n";
+      std::cout << "[game] Draw! Round " << round
+                << " | Waiting for next round...\n";
     else
-      std::cout << "[game] " << winner << " wins! Round " << round << " | Waiting for next round...\n";
+      std::cout << "[game] " << winner << " wins! Round " << round
+                << " | Waiting for next round...\n";
 
   } else if (event == "lobby_reset") {
     std::cout << "[lobby] Server reset lobby — reconnecting...\n";
