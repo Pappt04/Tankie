@@ -77,6 +77,10 @@ public partial class GameManager : Node2D
 	private bool _gameStarted = false;
 	private bool _gameOver = false;
 	private bool _animating = false;
+
+	private System.Threading.CancellationTokenSource _turnCts;
+	private readonly Dictionary<string, int> _timeoutCounts = new Dictionary<string, int>();
+	private const int TurnTimeLimitSeconds = 30;
 	private int _gridW;
 	private int _gridH;
 	private Label _overlayLabel;
@@ -219,6 +223,7 @@ public partial class GameManager : Node2D
 				GameServer.Instance?.BroadcastMessage(
 					$"{{\"event\": \"game_started\", \"onTurn\": \"{players[turnIndex].Name}\"}}"
 				);
+				StartTurnTimer(players[turnIndex].Name);
 				return;
 			}
 			_overlayLabel.Text = steps[idx];
@@ -452,6 +457,7 @@ public partial class GameManager : Node2D
 
 	private async void ResetToLobby()
 	{
+		_turnCts?.Cancel();
 		GameServer.Instance?.BroadcastMessage("{\"event\": \"lobby_reset\"}");
 		if (GameServer.Instance != null)
 			await GameServer.Instance.DisconnectAllClients();
@@ -459,6 +465,63 @@ public partial class GameManager : Node2D
 		GlobalState.Scores.Clear();
 		GlobalState.RoundNumber = 0;
 		GetTree().ChangeSceneToFile("res://scenes/menu.tscn");
+	}
+
+	private void StartTurnTimer(string tankId)
+	{
+		_turnCts?.Cancel();
+		_turnCts?.Dispose();
+		_turnCts = new System.Threading.CancellationTokenSource();
+		var token = _turnCts.Token;
+
+		System.Threading.Tasks.Task.Delay(TurnTimeLimitSeconds * 1000, token).ContinueWith(t =>
+		{
+			if (!t.IsCanceled)
+				Callable.From(() => HandleTurnTimeout(tankId)).CallDeferred();
+		});
+	}
+
+	private void HandleTurnTimeout(string tankId)
+	{
+		if (!_gameStarted || _animating) return;
+		if (players.Count == 0 || players[turnIndex].Name != tankId) return;
+
+		_timeoutCounts.TryGetValue(tankId, out int count);
+		_timeoutCounts[tankId] = count + 1;
+
+		if (count + 1 >= 2)
+		{
+			GD.Print($"{tankId} timed out twice — disqualified.");
+			GameServer.Instance?.BroadcastMessage(
+				$"{{\"event\": \"turn_disqualified\", \"tankId\": \"{tankId}\"}}"
+			);
+			var tank = players[turnIndex];
+			players.RemoveAt(turnIndex);
+			if (IsInstanceValid(tank)) tank.QueueFree();
+			if (turnIndex >= players.Count) turnIndex = 0;
+
+			CheckWinner();
+			if (!_gameStarted) return;
+
+			string nextAfterDq = players[turnIndex].Name;
+			GameServer.Instance?.BroadcastMessage(
+				$"{{\"event\": \"turn_changed\", \"nextTurn\": \"{nextAfterDq}\"}}"
+			);
+			StartTurnTimer(nextAfterDq);
+		}
+		else
+		{
+			GD.Print($"{tankId} timed out — skipping turn.");
+			GameServer.Instance?.BroadcastMessage(
+				$"{{\"event\": \"turn_timeout\", \"tankId\": \"{tankId}\"}}"
+			);
+			turnIndex = (turnIndex + 1) % players.Count;
+			string nextTurnId = players[turnIndex].Name;
+			GameServer.Instance?.BroadcastMessage(
+				$"{{\"event\": \"turn_changed\", \"nextTurn\": \"{nextTurnId}\"}}"
+			);
+			StartTurnTimer(nextTurnId);
+		}
 	}
 
 	public override void _Process(double delta)
@@ -491,6 +554,8 @@ public partial class GameManager : Node2D
 				GD.Print($"It is {currentTank.Name}'s turn, not {tankId}");
 				return;
 			}
+
+			_turnCts?.Cancel();
 
 			if (
 				!root.TryGetProperty("actions", out JsonElement actionsElement)
@@ -534,6 +599,7 @@ public partial class GameManager : Node2D
 			GameServer.Instance?.BroadcastMessage(
 				$"{{\"event\": \"turn_changed\", \"nextTurn\": \"{nextTurnId}\"}}"
 			);
+			StartTurnTimer(nextTurnId);
 			GD.Print($"Turn finished for {tankId}. Next turn: {nextTurnId}");
 		}
 		catch (Exception e)
