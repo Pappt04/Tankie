@@ -130,6 +130,30 @@ public partial class GameServer : Node
 		}
 	}
 
+	public async Task DisconnectAllClients()
+	{
+		List<WebSocket> toClose;
+		lock (_clientsLock)
+		{
+			toClose = new List<WebSocket>(_clients);
+		}
+		foreach (var client in toClose)
+		{
+			if (client.State == WebSocketState.Open)
+			{
+				try
+				{
+					await client.CloseAsync(
+						WebSocketCloseStatus.NormalClosure,
+						"Lobby reset",
+						CancellationToken.None
+					);
+				}
+				catch { }
+			}
+		}
+	}
+
 	public void BroadcastMessage(string message)
 	{
 		byte[] buffer = Encoding.UTF8.GetBytes(message);

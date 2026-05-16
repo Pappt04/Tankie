@@ -31,39 +31,50 @@ await RunAsync();
 
 async Task RunAsync()
 {
-    var state = new GameState(TankId);
-
-    using var ws = new ClientWebSocket();
-    await ws.ConnectAsync(new Uri(ServerUri), CancellationToken.None);
-    Console.WriteLine($"Connected to {ServerUri} as '{TankId}'");
-
-    // Join the game
-    await SendAsync(ws, MakeJoin(TankId));
-
-    // Main receive loop
-    var buffer = new byte[8192];
-    while (ws.State == WebSocketState.Open)
+    while (true)
     {
-        var result = await ws.ReceiveAsync(buffer, CancellationToken.None);
-
-        if (result.MessageType == WebSocketMessageType.Close)
-            break;
-
-        var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
-        var data = JsonNode.Parse(json)!.AsObject();
-
-        Dispatch(data, state);
-
-        // Act when it is our turn
-        if (state.IsMyTurn)
+        try
         {
-            var actions = Strategy.DecideActions(state);
-            Console.WriteLine($"[action] sending {actions.Count} action(s)");
-            await SendAsync(ws, MakeCommand(TankId, actions));
-        }
-    }
+            var state = new GameState(TankId);
+            using var ws = new ClientWebSocket();
+            await ws.ConnectAsync(new Uri(ServerUri), CancellationToken.None);
+            Console.WriteLine($"Connected to {ServerUri} as '{TankId}'");
 
-    Console.WriteLine("Disconnected.");
+            // Join the game
+            await SendAsync(ws, MakeJoin(TankId));
+
+            // Main receive loop
+            var buffer = new byte[8192];
+            while (ws.State == WebSocketState.Open)
+            {
+                var result = await ws.ReceiveAsync(buffer, CancellationToken.None);
+
+                if (result.MessageType == WebSocketMessageType.Close)
+                    break;
+
+                var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                var data = JsonNode.Parse(json)!.AsObject();
+
+                Dispatch(data, state);
+
+                // Act when it is our turn
+                if (state.IsMyTurn)
+                {
+                    var actions = Strategy.DecideActions(state);
+                    Console.WriteLine($"[action] sending {actions.Count} action(s)");
+                    await SendAsync(ws, MakeCommand(TankId, actions));
+                }
+            }
+
+            Console.WriteLine("Disconnected. Reconnecting in 2s...");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[error] {e.Message} — retrying in 2s...");
+        }
+
+        await Task.Delay(2000);
+    }
 }
 
 // ------------------------------------------------------------------ //
@@ -143,9 +154,17 @@ static void Dispatch(JsonObject data, GameState state)
         case "game_over":
             var winner = data["winner"]?.GetValue<string>() ?? "";
             state.HandleGameOver(winner);
-            Console.WriteLine(string.IsNullOrEmpty(winner)
-                ? "[game] Draw! Waiting for next round..."
-                : $"[game] {winner} wins! Waiting for next round...");
+            var round = data["round"]?.GetValue<int>() ?? 0;
+            var scoresNode = data["scores"]?.AsObject();
+            var scoreStr = scoresNode != null
+                ? string.Join("  ", scoresNode.Select(kv => $"{kv.Key}: {kv.Value}"))
+                : "";
+            var result = string.IsNullOrEmpty(winner) ? "[game] Draw!" : $"[game] {winner} wins!";
+            Console.WriteLine($"{result} Round {round} | Scores: {scoreStr} | Waiting for next round...");
+            break;
+
+        case "lobby_reset":
+            Console.WriteLine("[lobby] Server reset lobby — reconnecting...");
             break;
 
         default:

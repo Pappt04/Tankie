@@ -74,7 +74,12 @@ def dispatch(data: dict, state: GameState) -> None:
     elif event == "game_over":
         state.handle_game_over(data.get("winner", ""))
         msg = f"[game] {state.winner} wins!" if state.winner else "[game] Draw!"
-        print(msg + " Waiting for next round...")
+        scores = data.get("scores", {})
+        scores_str = "  ".join(f"{k}: {v}" for k, v in scores.items())
+        print(msg + f" Round {data.get('round', '?')} | Scores: {scores_str} | Waiting for next round...")
+
+    elif event == "lobby_reset":
+        print("[lobby] Server reset lobby — reconnecting...")
 
     else:
         print(f"[unknown event] {data}")
@@ -85,25 +90,29 @@ def dispatch(data: dict, state: GameState) -> None:
 # ------------------------------------------------------------------ #
 
 async def run() -> None:
-    state = GameState(my_tank_id=TANK_ID)
+    while True:
+        try:
+            async with websockets.connect(SERVER_URI) as ws:
+                print(f"Connected to {SERVER_URI} as '{TANK_ID}'")
+                state = GameState(my_tank_id=TANK_ID)
 
-    async with websockets.connect(SERVER_URI) as ws:
-        print(f"Connected to {SERVER_URI} as '{TANK_ID}'")
+                # Join the game
+                await ws.send(make_join(TANK_ID))
 
-        # Join the game
-        await ws.send(make_join(TANK_ID))
+                async for raw in ws:
+                    data = json.loads(raw)
+                    dispatch(data, state)
 
-        async for raw in ws:
-            data = json.loads(raw)
-            dispatch(data, state)
+                    # Act when it is our turn
+                    if state.is_my_turn:
+                        actions = decide_actions(state)
+                        print(f"[action] sending {actions}")
+                        await ws.send(make_command(TANK_ID, actions))
 
-            # Act when it is our turn
-            if state.is_my_turn:
-                actions = decide_actions(state)
-                print(f"[action] sending {actions}")
-                await ws.send(make_command(TANK_ID, actions))
-
-    print("Disconnected.")
+            print("Disconnected. Reconnecting in 2s...")
+        except OSError as e:
+            print(f"[error] {e} — retrying in 2s...")
+        await asyncio.sleep(2)
 
 
 if __name__ == "__main__":

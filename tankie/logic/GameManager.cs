@@ -19,6 +19,8 @@ public partial class GameManager : Node2D
 	private int _gridW;
 	private int _gridH;
 	private Label _overlayLabel;
+	private Label _roundLabel;
+	private Label[] _scoreLabels;
 	private CanvasLayer _canvas;
 
 	public override void _Ready()
@@ -79,14 +81,30 @@ public partial class GameManager : Node2D
 		_overlayLabel.Text = "";
 		_canvas.AddChild(_overlayLabel);
 
-		// Player name HUD — top-right corner
+		// Round counter — top-left
+		_roundLabel = new Label();
+		_roundLabel.AnchorLeft = 0;
+		_roundLabel.AnchorRight = 0;
+		_roundLabel.AnchorTop = 0;
+		_roundLabel.AnchorBottom = 0;
+		_roundLabel.OffsetLeft = 16;
+		_roundLabel.OffsetRight = 220;
+		_roundLabel.OffsetTop = 16;
+		_roundLabel.OffsetBottom = 54;
+		_roundLabel.AddThemeFontSizeOverride("font_size", 28);
+		_roundLabel.AddThemeColorOverride("font_color", new Color(1f, 1f, 1f));
+		_roundLabel.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0, 1));
+		_roundLabel.AddThemeConstantOverride("outline_size", 5);
+		_canvas.AddChild(_roundLabel);
+
+		// Player name + score HUD — top-right corner
 		Color[] teamColors = { new Color(0.25f, 0.6f, 1f), new Color(1f, 0.15f, 0.15f) };
 		string[] teamNames = { "Blue", "Red" };
 
+		_scoreLabels = new Label[players.Count];
 		for (int i = 0; i < players.Count; i++)
 		{
 			Label hud = new Label();
-			hud.Text = $"● {players[i].Name}  [{teamNames[i]}]";
 			hud.AnchorLeft = 1;
 			hud.AnchorRight = 1;
 			hud.AnchorTop = 0;
@@ -102,6 +120,22 @@ public partial class GameManager : Node2D
 			hud.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0, 1));
 			hud.AddThemeConstantOverride("outline_size", 5);
 			_canvas.AddChild(hud);
+			_scoreLabels[i] = hud;
+		}
+
+		UpdateHud();
+	}
+
+	private void UpdateHud()
+	{
+		_roundLabel.Text = $"Round {GlobalState.RoundNumber}";
+
+		string[] teamNames = { "Blue", "Red" };
+		for (int i = 0; i < players.Count && i < _scoreLabels.Length; i++)
+		{
+			string name = players[i].Name;
+			int score = GlobalState.Scores.TryGetValue(name, out int s) ? s : 0;
+			_scoreLabels[i].Text = $"● {name}  [{teamNames[i]}]  {score} pts";
 		}
 	}
 
@@ -172,20 +206,37 @@ public partial class GameManager : Node2D
 		{
 			_gameStarted = false;
 			_gameOver = true;
-			_overlayLabel.Text = $"{players[0].Name}\nWins!\n\n[ENTER] Play again";
+			GlobalState.RoundNumber++;
+			string winner = players[0].Name;
+			GlobalState.Scores.TryGetValue(winner, out int prev);
+			GlobalState.Scores[winner] = prev + 1;
+			UpdateHud();
 			_overlayLabel.AddThemeFontSizeOverride("font_size", 100);
+			_overlayLabel.Text = $"{winner}\nWins!\n\n[ENTER] Play again   [L] New lobby";
 			GameServer.Instance?.BroadcastMessage(
-				$"{{\"event\": \"game_over\", \"winner\": \"{players[0].Name}\"}}"
+				$"{{\"event\": \"game_over\", \"winner\": \"{winner}\", \"round\": {GlobalState.RoundNumber}, \"scores\": {BuildScoresJson()}}}"
 			);
 		}
 		else if (players.Count == 0)
 		{
 			_gameStarted = false;
 			_gameOver = true;
-			_overlayLabel.Text = "Draw!\n\n[ENTER] Play again";
+			GlobalState.RoundNumber++;
+			UpdateHud();
 			_overlayLabel.AddThemeFontSizeOverride("font_size", 100);
-			GameServer.Instance?.BroadcastMessage("{\"event\": \"game_over\", \"winner\": \"\"}");
+			_overlayLabel.Text = "Draw!\n\n[ENTER] Play again   [L] New lobby";
+			GameServer.Instance?.BroadcastMessage(
+				$"{{\"event\": \"game_over\", \"winner\": \"\", \"round\": {GlobalState.RoundNumber}, \"scores\": {BuildScoresJson()}}}"
+			);
 		}
+	}
+
+	private string BuildScoresJson()
+	{
+		var parts = new System.Collections.Generic.List<string>();
+		foreach (var kv in GlobalState.Scores)
+			parts.Add($"\"{kv.Key}\": {kv.Value}");
+		return "{" + string.Join(", ", parts) + "}";
 	}
 
 	private void GenerateMaze()
@@ -326,7 +377,21 @@ public partial class GameManager : Node2D
 
 			if (key.Keycode == Key.Enter && _gameOver)
 				GetTree().ReloadCurrentScene();
+
+			if (key.Keycode == Key.L && _gameOver)
+				ResetToLobby();
 		}
+	}
+
+	private async void ResetToLobby()
+	{
+		GameServer.Instance?.BroadcastMessage("{\"event\": \"lobby_reset\"}");
+		if (GameServer.Instance != null)
+			await GameServer.Instance.DisconnectAllClients();
+		GlobalState.ConnectedPlayers.Clear();
+		GlobalState.Scores.Clear();
+		GlobalState.RoundNumber = 0;
+		GetTree().ChangeSceneToFile("res://scenes/menu.tscn");
 	}
 
 	public override void _Process(double delta)
