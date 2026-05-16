@@ -15,6 +15,7 @@ public partial class GameManager : Node2D
 
 	private bool _gameStarted = false;
 	private bool _gameOver = false;
+	private bool _animating = false;
 	private int _gridW;
 	private int _gridH;
 	private Label _overlayLabel;
@@ -330,13 +331,14 @@ public partial class GameManager : Node2D
 
 	public override void _Process(double delta)
 	{
-		while (GameServer.CommandQueue.TryDequeue(out GameServer.CommandData cmdData))
-		{
-			ProcessCommand(cmdData.Message, cmdData.Client);
-		}
+		if (_animating)
+			return;
+
+		if (GameServer.CommandQueue.TryDequeue(out GameServer.CommandData cmdData))
+			ProcessCommandAsync(cmdData.Message, cmdData.Client);
 	}
 
-	private void ProcessCommand(string jsonMessage, WebSocket client)
+	private async void ProcessCommandAsync(string jsonMessage, WebSocket client)
 	{
 		if (!_gameStarted)
 			return;
@@ -386,7 +388,10 @@ public partial class GameManager : Node2D
 				return;
 			}
 
-			ExecuteActions(currentTank, actionList);
+			_animating = true;
+			await ExecuteActionsAsync(currentTank, actionList);
+			_animating = false;
+
 			CheckWinner();
 			if (!_gameStarted)
 				return;
@@ -400,11 +405,12 @@ public partial class GameManager : Node2D
 		}
 		catch (Exception e)
 		{
+			_animating = false;
 			GD.PrintErr("Failed to parse command: " + e.Message);
 		}
 	}
 
-	public void ExecuteActions(Player entity, List<PlayerAction> actions)
+	private async System.Threading.Tasks.Task ExecuteActionsAsync(Player entity, List<PlayerAction> actions)
 	{
 		foreach (var action in actions)
 		{
@@ -415,18 +421,24 @@ public partial class GameManager : Node2D
 					GameServer.Instance?.BroadcastMessage(
 						$"{{\"event\": \"moved\", \"tankId\": \"{entity.Name}\", \"direction\": \"{action.Direction}\", \"pos_x\": {entity.Position.X}, \"pos_y\": {entity.Position.Y}}}"
 					);
+					if (entity.MoveTween != null && entity.MoveTween.IsRunning())
+						await ToSignal(entity.MoveTween, Tween.SignalName.Finished);
 					break;
 				case TankAction.ROTATE:
 					entity.RotateTurret(action.Degrees);
 					GameServer.Instance?.BroadcastMessage(
 						$"{{\"event\": \"rotated\", \"tankId\": \"{entity.Name}\", \"degrees\": {action.Degrees}}}"
 					);
+					if (entity.RotateTween != null && entity.RotateTween.IsRunning())
+						await ToSignal(entity.RotateTween, Tween.SignalName.Finished);
 					break;
 				case TankAction.SHOOT:
-					entity.Shoot();
+					Bullet bullet = entity.Shoot();
 					GameServer.Instance?.BroadcastMessage(
 						$"{{\"event\": \"shot\", \"tankId\": \"{entity.Name}\"}}"
 					);
+					if (bullet != null)
+						await ToSignal(bullet, Bullet.SignalName.BulletFinished);
 					break;
 			}
 		}

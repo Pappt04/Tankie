@@ -21,7 +21,7 @@ from strategy import decide_actions
 # Configuration – change TANK_ID to your chosen player name
 # ------------------------------------------------------------------ #
 SERVER_URI = "ws://localhost:8080/"
-TANK_ID = "player1"
+TANK_ID = "piithon"
 
 
 # ------------------------------------------------------------------ #

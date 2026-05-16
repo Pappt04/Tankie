@@ -2,6 +2,8 @@ using Godot;
 
 public partial class Bullet : CharacterBody2D
 {
+	[Signal] public delegate void BulletFinishedEventHandler();
+
 	[Export]
 	public float Speed = 600.0f;
 	public string OwnerId = "";
@@ -80,7 +82,12 @@ public partial class Bullet : CharacterBody2D
 				GD.Print($"Bullet from {OwnerId} hit player: {player.Name}");
 				SpawnExplosion(player.GlobalPosition);
 				player.QueueFree();
-				QueueFree();
+				// Wait for explosion animation (4 frames × 0.1s) then signal done
+				GetTree().CreateTimer(0.45f).Timeout += () =>
+				{
+					EmitSignal(SignalName.BulletFinished);
+					QueueFree();
+				};
 				return;
 			}
 
@@ -95,6 +102,7 @@ public partial class Bullet : CharacterBody2D
 			else
 			{
 				GD.Print("Bullet max bounces reached. Destroying.");
+				EmitSignal(SignalName.BulletFinished);
 				QueueFree();
 			}
 		}

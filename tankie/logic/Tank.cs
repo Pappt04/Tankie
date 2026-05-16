@@ -22,9 +22,9 @@ public partial class Tank : CharacterBody2D
 				return;
 			}
 
-			_moveTween?.Kill();
-			_moveTween = CreateTween();
-			_moveTween
+			MoveTween?.Kill();
+			MoveTween = CreateTween();
+			MoveTween
 				.TweenProperty(this, "position", target, 0.5f)
 				.SetTrans(Tween.TransitionType.Sine)
 				.SetEase(Tween.EaseType.InOut);
@@ -35,8 +35,8 @@ public partial class Tank : CharacterBody2D
 	protected Marker2D _muzzle;
 	private PackedScene _bulletScene = GD.Load<PackedScene>("res://scenes/bullet.tscn");
 
-	private Tween _moveTween;
-	private Tween _rotateTween;
+	public Tween MoveTween   { get; private set; }
+	public Tween RotateTween { get; private set; }
 
 	private static readonly string[] BodyTextures =
 	{
@@ -181,18 +181,18 @@ public partial class Tank : CharacterBody2D
 		// Shortest angular path to avoid spinning the long way around
 		float diff = Mathf.Wrap(degrees - _turret.RotationDegrees, -180f, 180f);
 
-		_rotateTween?.Kill();
-		_rotateTween = CreateTween();
-		_rotateTween
+		RotateTween?.Kill();
+		RotateTween = CreateTween();
+		RotateTween
 			.TweenProperty(_turret, "rotation_degrees", _turret.RotationDegrees + diff, 0.35f)
 			.SetTrans(Tween.TransitionType.Sine)
 			.SetEase(Tween.EaseType.Out);
 	}
 
-	public virtual void Shoot()
+	public virtual Bullet Shoot()
 	{
 		if (_bulletScene == null)
-			return;
+			return null;
 
 		Bullet bullet = _bulletScene.Instantiate<Bullet>();
 		bullet.GlobalPosition = _muzzle.GlobalPosition;
@@ -211,5 +211,7 @@ public partial class Tank : CharacterBody2D
 					fire.Visible = false;
 			};
 		}
+
+		return bullet;
 	}
 }
