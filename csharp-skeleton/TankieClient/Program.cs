@@ -10,6 +10,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -22,6 +24,7 @@ using TankieClient;
 // Configuration – change TankId to your chosen player name
 // ------------------------------------------------------------------ //
 const string ServerUri = "ws://localhost:8080/";
+const string RestBase  = "http://localhost:8080";
 const string TankId    = "player1";
 
 // ------------------------------------------------------------------ //
@@ -94,6 +97,41 @@ static async Task SendAsync(ClientWebSocket ws, string message)
 {
     var bytes = Encoding.UTF8.GetBytes(message);
     await ws.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None);
+}
+
+// ------------------------------------------------------------------ //
+// REST helpers – async HTTP GET (call sparingly, not every turn)
+// ------------------------------------------------------------------ //
+
+static readonly HttpClient Http = new HttpClient();
+
+/// <summary>Wall list and gridSize.</summary>
+static Task<JsonObject?> FetchMapAsync() => RestGetAsync("/map");
+
+/// <summary>All living players' positions and turret angles.</summary>
+static async Task<JsonArray?> FetchPlayersAsync()
+{
+    var obj = await RestGetAsync("/players");
+    return obj?["players"]?.AsArray();
+}
+
+/// <summary>Single player state, or null if not found.</summary>
+static async Task<JsonObject?> FetchPlayerAsync(string tankId)
+{
+    try   { return await RestGetAsync($"/player/{tankId}"); }
+    catch { return null; }
+}
+
+/// <summary>Game status: gameStarted, gameOver, onTurn, round, scores.</summary>
+static Task<JsonObject?> FetchStateAsync() => RestGetAsync("/state");
+
+/// <summary>Physics constants for bullet trajectory math.</summary>
+static Task<JsonObject?> FetchConstantsAsync() => RestGetAsync("/constants");
+
+static async Task<JsonObject?> RestGetAsync(string path)
+{
+    var json = await Http.GetStringAsync(RestBase + path);
+    return JsonNode.Parse(json)?.AsObject();
 }
 
 // ------------------------------------------------------------------ //

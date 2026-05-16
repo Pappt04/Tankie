@@ -16,10 +16,15 @@ Action JSON shapes:
 """
 
 import random
+from actions import getMove, getRotation, getShoot
 from game_state import GameState
+from enum import Enum
 
-DIRECTIONS = ["up", "down", "left", "right"]
-
+class DIRECTIONS(Enum):
+    UP = 'up'
+    DOWN = 'down'
+    LEFT = 'left'
+    RIGHT = 'right'
 
 def decide_actions(state: GameState) -> list[dict]:
     """
@@ -42,13 +47,13 @@ def decide_actions(state: GameState) -> list[dict]:
     actions: list[dict] = []
 
     # Example: rotate to a random angle (free action – no budget cost)
-    actions.append({"type": "rotate", "degrees": random.randint(0, 359)})
+    actions.append(getRotation(random.randint(0, 359)))
 
     # Example: move in a random direction (costs 1 budget)
-    actions.append({"type": "move", "direction": random.choice(DIRECTIONS)})
+    actions.append(getMove(DIRECTIONS.LEFT))
 
     # Example: shoot (costs 1 budget – together with the move above this
     #          exhausts the 2-unit budget, so no more moves after this)
-    actions.append({"type": "shoot"})
+    actions.append(getShoot())
 
     return actions

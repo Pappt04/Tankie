@@ -12,6 +12,8 @@ you connect.  Press "Start" in-game once all players have joined.
 
 import asyncio
 import json
+import urllib.error
+import urllib.request
 import websockets
 
 from game_state import GameState
@@ -21,7 +23,46 @@ from strategy import decide_actions
 # Configuration – change TANK_ID to your chosen player name
 # ------------------------------------------------------------------ #
 SERVER_URI = "ws://localhost:8080/"
+REST_BASE  = "http://localhost:8080"
 TANK_ID = "piithon"
+
+
+# ------------------------------------------------------------------ #
+# REST helpers – blocking HTTP GET (call sparingly, not every turn)
+# ------------------------------------------------------------------ #
+
+def _get(path: str) -> dict:
+    with urllib.request.urlopen(REST_BASE + path) as r:
+        return json.loads(r.read())
+
+def fetch_map() -> dict:
+    """Wall list and gridSize.
+    Returns: {gridSize, walls: [{x, y, orientation}]}"""
+    return _get("/map")
+
+def fetch_players() -> list[dict]:
+    """All living players' positions and turret angles.
+    Returns: [{tankId, gridX, gridY, posX, posY, turretDegrees}]"""
+    return _get("/players")["players"]
+
+def fetch_player(tank_id: str) -> dict | None:
+    """Single player state, or None if not found.
+    Returns: {tankId, gridX, gridY, posX, posY, turretDegrees}"""
+    try:
+        return _get(f"/player/{tank_id}")
+    except urllib.error.HTTPError:
+        return None
+
+def fetch_state() -> dict:
+    """Game status.
+    Returns: {gameStarted, gameOver, onTurn, round, scores: {tankId: pts}}"""
+    return _get("/state")
+
+def fetch_constants() -> dict:
+    """Physics constants for bullet trajectory math.
+    Returns: {gridSize, bulletSpeed, bulletMaxBounces,
+              tankBodySize, tankBodyHalfSize, muzzleOffset, bulletRadius}"""
+    return _get("/constants")
 
 
 # ------------------------------------------------------------------ #
