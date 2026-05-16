@@ -43,6 +43,10 @@ class GameState:
             self.tanks[tank_id] = TankState(tank_id=tank_id)
 
     def handle_map(self, data: dict) -> None:
+        self.game_over = False
+        self.game_started = False
+        self.tanks.clear()
+
         self.grid_width = data["gridWidth"]
         self.grid_height = data["gridHeight"]
         self.grid_size = data["gridSize"]

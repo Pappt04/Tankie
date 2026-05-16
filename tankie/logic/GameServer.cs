@@ -36,13 +36,12 @@ public partial class GameServer : Node
 		try
 		{
 			_listener = new HttpListener();
-			_listener.Prefixes.Add("http://localhost:8080/");
-			_listener.Prefixes.Add("http://127.0.0.1:8080/");
+			_listener.Prefixes.Add("http://+:8080/");
 			_listener.Start();
 			_isRunning = true;
 
 			Task.Run(ListenLoop);
-			GD.Print("WebSocket Server started on ws://localhost:8080/");
+			GD.Print("WebSocket Server started on ws://0.0.0.0:8080/ (all interfaces)");
 		}
 		catch (Exception e)
 		{

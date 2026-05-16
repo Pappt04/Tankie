@@ -54,6 +54,10 @@ public class GameState
 
     public void HandleMap(JsonObject data)
     {
+        GameOver    = false;
+        GameStarted = false;
+        _tanks.Clear();
+
         GridWidth  = data["gridWidth"]!.GetValue<int>();
         GridHeight = data["gridHeight"]!.GetValue<int>();
         GridSize   = data["gridSize"]!.GetValue<int>();

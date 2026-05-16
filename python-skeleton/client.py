@@ -73,7 +73,8 @@ def dispatch(data: dict, state: GameState) -> None:
 
     elif event == "game_over":
         state.handle_game_over(data.get("winner", ""))
-        print(f"[game] over – winner: {state.winner}")
+        msg = f"[game] {state.winner} wins!" if state.winner else "[game] Draw!"
+        print(msg + " Waiting for next round...")
 
     else:
         print(f"[unknown event] {data}")
@@ -95,9 +96,6 @@ async def run() -> None:
         async for raw in ws:
             data = json.loads(raw)
             dispatch(data, state)
-
-            if state.game_over:
-                break
 
             # Act when it is our turn
             if state.is_my_turn:

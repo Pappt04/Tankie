@@ -54,9 +54,6 @@ async Task RunAsync()
 
         Dispatch(data, state);
 
-        if (state.GameOver)
-            break;
-
         // Act when it is our turn
         if (state.IsMyTurn)
         {
@@ -146,7 +143,9 @@ static void Dispatch(JsonObject data, GameState state)
         case "game_over":
             var winner = data["winner"]?.GetValue<string>() ?? "";
             state.HandleGameOver(winner);
-            Console.WriteLine($"[game] over – winner: {winner}");
+            Console.WriteLine(string.IsNullOrEmpty(winner)
+                ? "[game] Draw! Waiting for next round..."
+                : $"[game] {winner} wins! Waiting for next round...");
             break;
 
         default:

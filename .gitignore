@@ -1,0 +1,17 @@
+# Godot editor state & cache
+tankie/.godot/editor/
+tankie/.godot/mono/metadata/
+tankie/.godot/mono/temp/
+
+# Godot export / import cache
+tankie/.godot/imported/
+
+# Python
+python-skeleton/__pycache__/
+python-skeleton/.venv/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# C++ build artifacts
+cpp-skeleton/build/
