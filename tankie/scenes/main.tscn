@@ -9,9 +9,10 @@ script = ExtResource("1_mgr")
 [node name="BackgroundColor" type="ColorRect" parent="."]
 offset_right = 4000.0
 offset_bottom = 4000.0
-color = Color(0.1, 0.1, 0.1, 1)
+color = Color(0.82, 0.82, 0.82, 1)
 
 [node name="BackgroundTiles" type="TextureRect" parent="."]
+visible = false
 texture_repeat = 2
 offset_right = 4000.0
 offset_bottom = 4000.0

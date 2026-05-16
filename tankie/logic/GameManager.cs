@@ -212,7 +212,7 @@ public partial class GameManager : Node2D
 			GlobalState.Scores[winner] = prev + 1;
 			UpdateHud();
 			_overlayLabel.AddThemeFontSizeOverride("font_size", 100);
-			_overlayLabel.Text = $"{winner}\nWins!\n\n[ENTER] Play again   [L] New lobby";
+			_overlayLabel.Text = $"{winner}\nWins!\n\n[ENTER] Play again";
 			GameServer.Instance?.BroadcastMessage(
 				$"{{\"event\": \"game_over\", \"winner\": \"{winner}\", \"round\": {GlobalState.RoundNumber}, \"scores\": {BuildScoresJson()}}}"
 			);

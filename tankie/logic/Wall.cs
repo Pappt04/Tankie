@@ -40,6 +40,7 @@ public partial class Wall : StaticBody2D
 			sprite.RegionEnabled = true;
 			sprite.RegionRect = new Rect2(contentX, 0, contentWidth, texHeight);
 			sprite.Scale = new Vector2(length / contentWidth, thickness / texHeight);
+			sprite.SelfModulate = Colors.Black;
 		}
 
 		CollisionShape2D collision = GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
