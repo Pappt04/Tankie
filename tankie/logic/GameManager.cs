@@ -579,17 +579,20 @@ public partial class GameManager : Node2D
 
 			int moveCount = 0;
 			int shootCount = 0;
+			int rotateCount = 0;
 
 			foreach (PlayerAction action in actionList)
 				if (action.Type == TankAction.MOVE)
 					moveCount++;
 				else if (action.Type == TankAction.SHOOT)
 					shootCount++;
+				else if (action.Type == TankAction.ROTATE)
+					rotateCount++;
 
-			if (moveCount + shootCount > 2 || shootCount > 1)
+			if (moveCount + shootCount > 2 || shootCount > 1 || rotateCount > 1)
 			{
 				GD.Print(
-					$"Invalid action budget: Moves={moveCount}, Shoots={shootCount}. Allowed: 2 moves or 1 move + 1 shoot."
+					$"Invalid action budget: Moves={moveCount}, Shoots={shootCount}, Rotates={rotateCount}. Allowed: up to 2 moves, 1 shoot, 1 rotate."
 				);
 				return;
 			}

@@ -10,7 +10,7 @@ namespace TankieClient;
 ///   • Up to 2 MOVE actions, OR
 ///   • 1 MOVE + 1 SHOOT, OR
 ///   • 1 SHOOT only
-///   • Any number of ROTATE actions (free – no budget cost)
+///   • Up to 1 ROTATE action (free – no budget cost)
 ///
 /// Action object shapes (serialised to JSON by the client):
 ///   new MoveAction("up"|"down"|"left"|"right")

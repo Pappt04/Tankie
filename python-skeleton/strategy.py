@@ -7,7 +7,7 @@ Action budget per turn:
   - Up to 2 MOVE actions, OR
   - 1 MOVE + 1 SHOOT, OR
   - 1 SHOOT only
-  - Any number of ROTATE actions (they don't consume budget)
+  - Up to 1 ROTATE action (free – no budget cost)
 
 Action JSON shapes:
   {"type": "move",   "direction": "up"|"down"|"left"|"right"}

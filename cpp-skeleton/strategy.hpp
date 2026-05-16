@@ -7,7 +7,7 @@
  *   - Up to 2 MOVE actions, OR
  *   - 1 MOVE + 1 SHOOT, OR
  *   - 1 SHOOT only
- *   - Any number of ROTATE actions (free – no budget cost)
+ *   - Up to 1 ROTATE action (free – no budget cost)
  *
  * Return a JSON array string, e.g.:
  *   [{"type":"rotate","degrees":90},{"type":"move","direction":"up"},{"type":"shoot"}]
