@@ -202,6 +202,8 @@ public partial class GameServer : Node
 			json = BuildStateJson();
 		else if (path == "/constants")
 			json = BuildConstantsJson();
+		else if (path == "/turn_time")
+			json = BuildTurnTimeJson();
 		else
 		{
 			ctx.Response.StatusCode = 404;
@@ -326,6 +328,14 @@ public partial class GameServer : Node
 		       $",\"muzzleOffset\":{muzzleOffset:F2}" +
 		       $",\"bulletRadius\":{bulletRadius:F2}" +
 		       $"}}";
+	}
+	private static string BuildTurnTimeJson()
+	{
+		var gm = GameManager.Instance;
+		double remaining = gm?.GetTurnTimeRemainingSeconds() ?? 0;
+		var snap = gm?.GetSnapshot();
+		string onTurn = snap?.OnTurn ?? "";
+		return $"{{\"turnTimeRemainingSeconds\":{remaining:F2},\"onTurn\":\"{onTurn}\"}}";
 	}
 	// ─────────────────────────────────────────────────────────────────
 

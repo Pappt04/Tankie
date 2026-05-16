@@ -128,6 +128,10 @@ static Task<JsonObject?> FetchStateAsync() => RestGetAsync("/state");
 /// <summary>Physics constants for bullet trajectory math.</summary>
 static Task<JsonObject?> FetchConstantsAsync() => RestGetAsync("/constants");
 
+/// <summary>Seconds remaining in the current turn.
+/// Returns: {turnTimeRemainingSeconds, onTurn}</summary>
+static Task<JsonObject?> FetchTurnTimeAsync() => RestGetAsync("/turn_time");
+
 static async Task<JsonObject?> RestGetAsync(string path)
 {
     var json = await Http.GetStringAsync(RestBase + path);
@@ -187,6 +191,16 @@ static void Dispatch(JsonObject data, GameState state)
 
         case "shot":
             Console.WriteLine($"[shot] {data["tankId"]} fired");
+            break;
+
+        case "turn_timeout":
+            var timedOutId = data["tankId"]!.GetValue<string>();
+            Console.WriteLine($"[timeout] {timedOutId} timed out — turn skipped (1st warning)");
+            break;
+
+        case "turn_disqualified":
+            var dqId = data["tankId"]!.GetValue<string>();
+            Console.WriteLine($"[disqualified] {dqId} timed out twice — eliminated");
             break;
 
         case "game_over":

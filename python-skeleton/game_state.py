@@ -83,6 +83,13 @@ class GameState:
         self.game_over = True
         self.winner = winner
 
+    def handle_turn_timeout(self, tank_id: str) -> None:
+        pass  # Turn skipped; server will send turn_changed next
+
+    def handle_turn_disqualified(self, tank_id: str) -> None:
+        if tank_id in self.tanks:
+            self.tanks[tank_id].alive = False
+
     # ------------------------------------------------------------------ #
     # Convenience helpers
     # ------------------------------------------------------------------ #

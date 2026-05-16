@@ -87,6 +87,15 @@ void dispatch(const std::string &json, GameState &state) {
     std::cout << "[shot] " << JsonParser::extractString(json, "tankId")
               << " fired\n";
 
+  } else if (event == "turn_timeout") {
+    const std::string tank_id = JsonParser::extractString(json, "tankId");
+    std::cout << "[timeout] " << tank_id << " timed out — turn skipped (1st warning)\n";
+
+  } else if (event == "turn_disqualified") {
+    const std::string tank_id = JsonParser::extractString(json, "tankId");
+    state.handle_turn_disqualified(tank_id);
+    std::cout << "[disqualified] " << tank_id << " timed out twice — eliminated\n";
+
   } else if (event == "game_over") {
     const std::string winner = JsonParser::extractString(json, "winner");
     state.handle_game_over(winner);

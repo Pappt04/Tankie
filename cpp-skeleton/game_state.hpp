@@ -89,6 +89,12 @@ public:
     winner_ = winner;
   }
 
+  void handle_turn_disqualified(const std::string &tank_id) {
+    auto it = tanks_.find(tank_id);
+    if (it != tanks_.end())
+      it->second.alive = false;
+  }
+
   // ---- convenience helpers ------------------------------------- //
 
   bool is_my_turn() const { return game_started_ && on_turn_ == my_tank_id_; }

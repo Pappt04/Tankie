@@ -64,6 +64,11 @@ def fetch_constants() -> dict:
               tankBodySize, tankBodyHalfSize, muzzleOffset, bulletRadius}"""
     return _get("/constants")
 
+def fetch_turn_time() -> dict:
+    """Seconds remaining in the current turn.
+    Returns: {turnTimeRemainingSeconds: float, onTurn: str}"""
+    return _get("/turn_time")
+
 
 # ------------------------------------------------------------------ #
 # Message helpers
@@ -111,6 +116,16 @@ def dispatch(data: dict, state: GameState) -> None:
 
     elif event == "shot":
         print(f"[shot] {data['tankId']} fired")
+
+    elif event == "turn_timeout":
+        tank_id = data["tankId"]
+        state.handle_turn_timeout(tank_id)
+        print(f"[timeout] {tank_id} timed out — turn skipped (1st warning)")
+
+    elif event == "turn_disqualified":
+        tank_id = data["tankId"]
+        state.handle_turn_disqualified(tank_id)
+        print(f"[disqualified] {tank_id} timed out twice — eliminated")
 
     elif event == "game_over":
         state.handle_game_over(data.get("winner", ""))

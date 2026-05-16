@@ -81,6 +81,14 @@ public partial class GameManager : Node2D
 	private System.Threading.CancellationTokenSource _turnCts;
 	private readonly Dictionary<string, int> _timeoutCounts = new Dictionary<string, int>();
 	private const int TurnTimeLimitSeconds = 30;
+	private DateTime _turnStartedAt = DateTime.MinValue;
+
+	public double GetTurnTimeRemainingSeconds()
+	{
+		if (_turnStartedAt == DateTime.MinValue) return 0;
+		double elapsed = (DateTime.UtcNow - _turnStartedAt).TotalSeconds;
+		return Math.Max(0, TurnTimeLimitSeconds - elapsed);
+	}
 	private int _gridW;
 	private int _gridH;
 	private Label _overlayLabel;
@@ -472,6 +480,7 @@ public partial class GameManager : Node2D
 		_turnCts?.Cancel();
 		_turnCts?.Dispose();
 		_turnCts = new System.Threading.CancellationTokenSource();
+		_turnStartedAt = DateTime.UtcNow;
 		var token = _turnCts.Token;
 
 		System.Threading.Tasks.Task.Delay(TurnTimeLimitSeconds * 1000, token).ContinueWith(t =>

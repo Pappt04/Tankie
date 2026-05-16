@@ -53,6 +53,12 @@ inline std::string fetch_constants() {
   return rest::get(HOST, PORT, "/constants");
 }
 
+/// Seconds remaining in the current turn.
+///   turnTimeRemainingSeconds (float), onTurn (string)
+inline std::string fetch_turn_time() {
+  return rest::get(HOST, PORT, "/turn_time");
+}
+
 // ------------------------------------------------------------------ //
 // Entry point
 // ------------------------------------------------------------------ //
