@@ -15,3 +15,5 @@ python-skeleton/.venv/
 
 # C++ build artifacts
 cpp-skeleton/build/
+cpp-skeleton/compile_commands.json
+*.d
