@@ -89,7 +89,12 @@ int main() {
       // Main receive loop.
       while (true) {
         const std::string msg = ws::read_frame(sock);
+        const bool was_started = state.game_started();
         dispatch(msg, state);
+
+        // On game start fetch full positions (posX/posY) for all tanks
+        if (!was_started && state.game_started())
+          state.handle_players_snapshot(fetch_players());
 
         if (state.is_my_turn()) {
           const std::string actions = decide_actions(state);

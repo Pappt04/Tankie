@@ -90,6 +90,21 @@ public class GameState
         OnTurn = onTurn;
     }
 
+    public void HandlePlayersSnapshot(JsonArray players)
+    {
+        foreach (var node in players)
+        {
+            var p      = node!.AsObject();
+            var tankId = p["tankId"]!.GetValue<string>();
+            if (!_tanks.TryGetValue(tankId, out var tank)) continue;
+            tank.PosX          = p["posX"]!.GetValue<float>();
+            tank.PosY          = p["posY"]!.GetValue<float>();
+            tank.GridX         = p["gridX"]!.GetValue<int>();
+            tank.GridY         = p["gridY"]!.GetValue<int>();
+            tank.TurretDegrees = p["turretDegrees"]!.GetValue<float>();
+        }
+    }
+
     public void HandleTurnChanged(string nextTurn)
     {
         OnTurn = nextTurn;

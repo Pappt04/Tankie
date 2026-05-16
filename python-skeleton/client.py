@@ -100,6 +100,8 @@ def dispatch(data: dict, state: GameState) -> None:
 
     elif event == "game_started":
         state.handle_game_started(data["onTurn"])
+        players = fetch_players()
+        state.handle_players_snapshot(players)
         print(f"[game] started – first turn: {data['onTurn']}")
 
     elif event == "turn_changed":

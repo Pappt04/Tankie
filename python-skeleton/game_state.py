@@ -64,6 +64,18 @@ class GameState:
         self.game_started = True
         self.on_turn = on_turn
 
+    def handle_players_snapshot(self, players: list[dict]) -> None:
+        for p in players:
+            tid = p["tankId"]
+            if tid not in self.tanks:
+                self.tanks[tid] = TankState(tank_id=tid)
+            t = self.tanks[tid]
+            t.pos_x          = p["posX"]
+            t.pos_y          = p["posY"]
+            t.grid_x         = p["gridX"]
+            t.grid_y         = p["gridY"]
+            t.turret_degrees = p["turretDegrees"]
+
     def handle_turn_changed(self, next_turn: str) -> None:
         self.on_turn = next_turn
 

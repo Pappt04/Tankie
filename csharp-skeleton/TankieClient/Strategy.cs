@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 namespace TankieClient;
 
+public enum ACTION_DIRECTIONS { UP = 0, DOWN = 1, LEFT = 2, RIGHT = 3 };
+
 /// <summary>
 /// Strategy module – implement <see cref="DecideActions"/> to control your tank.
 ///

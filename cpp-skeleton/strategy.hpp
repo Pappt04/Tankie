@@ -26,16 +26,14 @@
 // ------------------------------------------------------------------ //
 inline std::string decide_actions(const GameState &state) {
   // TODO: replace the random strategy below with your own logic.
-  (void)state; // remove when you start using state
+
+  actions::ActionList actions;
 
   int rand_degrees = std::rand() % 360;
   const std::string &rand_dir =
       actions::directions[std::rand() % actions::directions.size()];
 
-  // Rotate (free) + move (1 budget) + shoot (1 budget) = 2 budget units used
-  std::string action_array = "[" + actions::rotate(rand_degrees) + "," +
-                             actions::move(rand_dir) + "," + actions::shoot() +
-                             "]";
+  actions.addMove(actions::UP);
 
-  return action_array;
+  return actions.getJsonString();
 }

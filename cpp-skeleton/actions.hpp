@@ -3,10 +3,11 @@
 #include <array>
 #include <cstdlib>
 #include <string>
+#include <vector>
 
 namespace actions {
 
-enum DIRECTIONS { UP, DOWN, LEFT, RIGHT };
+enum ACTION_DIRECTIONS { UP = 0, DOWN = 1, LEFT = 2, RIGHT = 3 };
 
 static const std::array<std::string, 4> directions = {"up", "down", "left",
                                                       "right"};
@@ -23,21 +24,29 @@ inline std::string shoot() { return R"({"type":"shoot"})"; }
 class ActionList {
 
 private:
-  std::string action;
+  std::vector<std::string> actions;
 
 public:
-  ActionList() { action += "["; }
+  ActionList() { actions.resize(3); }
+  void addShoot() { actions.push_back(shoot()); }
 
-  void addShoot() { action += shoot() + ","; }
-
-  void addMove(const DIRECTIONS direction) {
-    std::string t = move(directions[direction]);
-    action += t + ",";
+  void addMove(const ACTION_DIRECTIONS direction) {
+    actions.push_back(move(directions[direction]));
   }
 
-  void addRotate(int degrees) { action += rotate(degrees); }
+  void addRotate(int degrees) { actions.push_back(rotate(degrees)); }
 
-  std::string jsonString() {}
+  std::string getJsonString() {
+
+    std::string json = "[";
+    for (auto it = actions.begin(); it != actions.end(); it++) {
+      json += *it;
+      if (it + 1 != actions.end())
+        json += ",";
+    }
+    json += "]";
+    return json;
+  }
 };
 
 } // namespace actions

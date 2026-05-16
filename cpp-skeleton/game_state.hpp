@@ -1,5 +1,6 @@
 #pragma once
 
+#include "json_parser.hpp"
 #include "tank_state.hpp"
 
 #include <set>
@@ -82,6 +83,19 @@ public:
     auto it = tanks_.find(tank_id);
     if (it != tanks_.end())
       it->second.turret_degrees = degrees;
+  }
+
+  void handle_players_snapshot(const std::string &players_json) {
+    for (const auto &obj : JsonParser::extractObjectArray(players_json, "players")) {
+      const std::string tid = JsonParser::extractString(obj, "tankId");
+      auto it = tanks_.find(tid);
+      if (it == tanks_.end()) continue;
+      it->second.pos_x          = JsonParser::extractFloat(obj, "posX");
+      it->second.pos_y          = JsonParser::extractFloat(obj, "posY");
+      it->second.grid_x         = JsonParser::extractInt(obj, "gridX");
+      it->second.grid_y         = JsonParser::extractInt(obj, "gridY");
+      it->second.turret_degrees = JsonParser::extractFloat(obj, "turretDegrees");
+    }
   }
 
   void handle_game_over(const std::string &winner) {
