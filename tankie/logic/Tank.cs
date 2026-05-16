@@ -35,8 +35,9 @@ public partial class Tank : CharacterBody2D
 	protected Marker2D _muzzle;
 	private PackedScene _bulletScene = GD.Load<PackedScene>("res://scenes/bullet.tscn");
 
-	public Tween MoveTween   { get; private set; }
-	public Tween RotateTween { get; private set; }
+	public Tween MoveTween     { get; private set; }
+	public Tween RotateTween   { get; private set; }
+	public float TurretDegrees => _turret?.RotationDegrees ?? 0f;
 
 	private static readonly string[] BodyTextures =
 	{

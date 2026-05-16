@@ -6,6 +6,67 @@ using Godot;
 
 public partial class GameManager : Node2D
 {
+	public static GameManager Instance { get; private set; }
+
+	// ── Thread-safe snapshot read by the REST endpoints ──────────────
+	public class PlayerSnapshot
+	{
+		public string TankId       { get; set; }
+		public int    GridX        { get; set; }
+		public int    GridY        { get; set; }
+		public float  PosX         { get; set; }
+		public float  PosY         { get; set; }
+		public float  TurretDegrees { get; set; }
+	}
+
+	public class GameSnapshot
+	{
+		public bool                        GameStarted { get; set; }
+		public bool                        GameOver    { get; set; }
+		public string                      OnTurn      { get; set; }
+		public int                         Round       { get; set; }
+		public Dictionary<string, int>     Scores      { get; set; }
+		public List<PlayerSnapshot>        Players     { get; set; }
+	}
+
+	private GameSnapshot _snapshot = new GameSnapshot
+		{ Scores = new Dictionary<string, int>(), Players = new List<PlayerSnapshot>() };
+	private readonly object _snapshotLock = new object();
+
+	public GameSnapshot GetSnapshot()
+	{
+		lock (_snapshotLock) return _snapshot;
+	}
+
+	private void UpdateSnapshot()
+	{
+		var snap = new GameSnapshot
+		{
+			GameStarted = _gameStarted,
+			GameOver    = _gameOver,
+			OnTurn      = (_gameStarted && players.Count > 0 && turnIndex < players.Count)
+			              ? players[turnIndex].Name : "",
+			Round       = GlobalState.RoundNumber,
+			Scores      = new Dictionary<string, int>(GlobalState.Scores),
+			Players     = new List<PlayerSnapshot>()
+		};
+		foreach (var p in players)
+		{
+			if (IsInstanceValid(p))
+				snap.Players.Add(new PlayerSnapshot
+				{
+					TankId        = p.Name,
+					GridX         = p.GridPos.X,
+					GridY         = p.GridPos.Y,
+					PosX          = p.Position.X,
+					PosY          = p.Position.Y,
+					TurretDegrees = p.TurretDegrees
+				});
+		}
+		lock (_snapshotLock) _snapshot = snap;
+	}
+	// ─────────────────────────────────────────────────────────────────
+
 	private System.Collections.Generic.List<Player> players =
 		new System.Collections.Generic.List<Player>();
 	private PackedScene _playerScene = GD.Load<PackedScene>("res://scenes/player.tscn");
@@ -25,6 +86,8 @@ public partial class GameManager : Node2D
 
 	public override void _Ready()
 	{
+		Instance = this;
+
 		TextureRect bgTiles = GetNodeOrNull<TextureRect>("BackgroundTiles");
 		if (bgTiles != null)
 		{
@@ -60,6 +123,7 @@ public partial class GameManager : Node2D
 		}
 
 		SetupOverlayLabel();
+		UpdateSnapshot();
 		StartCountdown();
 	}
 
@@ -150,6 +214,7 @@ public partial class GameManager : Node2D
 			{
 				_overlayLabel.Text = "";
 				_gameStarted = true;
+				UpdateSnapshot();
 				BroadcastMap();
 				GameServer.Instance?.BroadcastMessage(
 					$"{{\"event\": \"game_started\", \"onTurn\": \"{players[turnIndex].Name}\"}}"
@@ -211,6 +276,7 @@ public partial class GameManager : Node2D
 			GlobalState.Scores.TryGetValue(winner, out int prev);
 			GlobalState.Scores[winner] = prev + 1;
 			UpdateHud();
+			UpdateSnapshot();
 			_overlayLabel.AddThemeFontSizeOverride("font_size", 100);
 			_overlayLabel.Text = $"{winner}\nWins!\n\n[ENTER] Play again";
 			GameServer.Instance?.BroadcastMessage(
@@ -223,6 +289,7 @@ public partial class GameManager : Node2D
 			_gameOver = true;
 			GlobalState.RoundNumber++;
 			UpdateHud();
+			UpdateSnapshot();
 			_overlayLabel.AddThemeFontSizeOverride("font_size", 100);
 			_overlayLabel.Text = "Draw!\n\n[ENTER] Play again   [L] New lobby";
 			GameServer.Instance?.BroadcastMessage(
@@ -456,6 +523,7 @@ public partial class GameManager : Node2D
 			_animating = true;
 			await ExecuteActionsAsync(currentTank, actionList);
 			_animating = false;
+			UpdateSnapshot();
 
 			CheckWinner();
 			if (!_gameStarted)

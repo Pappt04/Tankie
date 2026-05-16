@@ -63,8 +63,7 @@ public partial class GameServer : Node
 				}
 				else
 				{
-					context.Response.StatusCode = 400;
-					context.Response.Close();
+					HandleRestRequest(context);
 				}
 			}
 			catch (Exception e)
@@ -173,6 +172,162 @@ public partial class GameServer : Node
 			}
 		}
 	}
+
+	// ── REST endpoints ───────────────────────────────────────────────
+	// GET /map         → grid dimensions + all walls
+	// GET /players     → all player positions/turret angles
+	// GET /player/{id} → single player state
+	// GET /state       → game status, turn, round, scores
+	// GET /constants   → physics constants needed for shooting math
+
+	private void HandleRestRequest(HttpListenerContext ctx)
+	{
+		if (ctx.Request.HttpMethod != "GET")
+		{
+			ctx.Response.StatusCode = 405;
+			ctx.Response.Close();
+			return;
+		}
+
+		string path = ctx.Request.Url?.AbsolutePath ?? "/";
+
+		string json;
+		if (path == "/map")
+			json = BuildMapJson();
+		else if (path == "/players")
+			json = BuildPlayersJson();
+		else if (path.StartsWith("/player/"))
+			json = BuildPlayerJson(path.Substring("/player/".Length));
+		else if (path == "/state")
+			json = BuildStateJson();
+		else if (path == "/constants")
+			json = BuildConstantsJson();
+		else
+		{
+			ctx.Response.StatusCode = 404;
+			ctx.Response.Close();
+			return;
+		}
+
+		if (json == null)
+		{
+			ctx.Response.StatusCode = 404;
+			ctx.Response.Close();
+			return;
+		}
+
+		byte[] bytes = Encoding.UTF8.GetBytes(json);
+		ctx.Response.StatusCode = 200;
+		ctx.Response.ContentType = "application/json; charset=utf-8";
+		ctx.Response.ContentLength64 = bytes.Length;
+		ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
+		ctx.Response.Close();
+	}
+
+	private static string BuildMapJson()
+	{
+		int gs = GlobalState.Instance?.GridSize ?? 128;
+		var sb = new StringBuilder();
+		sb.Append("{");
+		sb.Append("\"gridSize\":" + gs);
+		sb.Append(",\"walls\":[");
+		bool first = true;
+		foreach (var (pos, orientation) in GlobalState.WallRegistry)
+		{
+			if (!first) sb.Append(",");
+			string o = orientation == 0 ? "HORIZONTAL" : "VERTICAL";
+			sb.Append($"{{\"x\":{pos.X},\"y\":{pos.Y},\"orientation\":\"{o}\"}}");
+			first = false;
+		}
+		sb.Append("]}");
+		return sb.ToString();
+	}
+
+	private static string BuildPlayersJson()
+	{
+		var snap = GameManager.Instance?.GetSnapshot();
+		if (snap == null) return "{\"players\":[]}";
+
+		var sb = new StringBuilder();
+		sb.Append("{\"players\":[");
+		bool first = true;
+		foreach (var p in snap.Players)
+		{
+			if (!first) sb.Append(",");
+			AppendPlayerJson(sb, p);
+			first = false;
+		}
+		sb.Append("]}");
+		return sb.ToString();
+	}
+
+	private static string BuildPlayerJson(string tankId)
+	{
+		var snap = GameManager.Instance?.GetSnapshot();
+		if (snap == null) return null;
+		foreach (var p in snap.Players)
+		{
+			if (p.TankId == tankId)
+			{
+				var sb = new StringBuilder();
+				AppendPlayerJson(sb, p);
+				return sb.ToString();
+			}
+		}
+		return null;
+	}
+
+	private static void AppendPlayerJson(StringBuilder sb, GameManager.PlayerSnapshot p)
+	{
+		sb.Append($"{{\"tankId\":\"{p.TankId}\"");
+		sb.Append($",\"gridX\":{p.GridX},\"gridY\":{p.GridY}");
+		sb.Append($",\"posX\":{p.PosX:F2},\"posY\":{p.PosY:F2}");
+		sb.Append($",\"turretDegrees\":{p.TurretDegrees:F2}");
+		sb.Append("}");
+	}
+
+	private static string BuildStateJson()
+	{
+		var snap = GameManager.Instance?.GetSnapshot();
+		if (snap == null)
+			return "{\"gameStarted\":false,\"gameOver\":false,\"onTurn\":\"\",\"round\":0,\"scores\":{}}";
+
+		var sb = new StringBuilder();
+		sb.Append("{");
+		sb.Append($"\"gameStarted\":{(snap.GameStarted ? "true" : "false")}");
+		sb.Append($",\"gameOver\":{(snap.GameOver ? "true" : "false")}");
+		sb.Append($",\"onTurn\":\"{snap.OnTurn}\"");
+		sb.Append($",\"round\":{snap.Round}");
+		sb.Append(",\"scores\":{");
+		bool first = true;
+		foreach (var kv in snap.Scores)
+		{
+			if (!first) sb.Append(",");
+			sb.Append($"\"{kv.Key}\":{kv.Value}");
+			first = false;
+		}
+		sb.Append("}}");
+		return sb.ToString();
+	}
+
+	private static string BuildConstantsJson()
+	{
+		int gs = GlobalState.Instance?.GridSize ?? 128;
+		float tankBodyHalf  = gs * 0.25f;   // half of body collision (gs*0.5 / 2)
+		float muzzleOffset  = gs * 0.42f;   // bullet spawn distance from tank center
+		float bulletRadius  = gs * 0.08f;   // bullet collision radius
+
+		return $"{{" +
+		       $"\"gridSize\":{gs}" +
+		       $",\"bulletSpeed\":600.0" +
+		       $",\"bulletMaxBounces\":2" +
+		       $",\"tankBodySize\":{gs * 0.5f:F2}" +
+		       $",\"tankBodyHalfSize\":{tankBodyHalf:F2}" +
+		       $",\"muzzleOffset\":{muzzleOffset:F2}" +
+		       $",\"bulletRadius\":{bulletRadius:F2}" +
+		       $"}}";
+	}
+	// ─────────────────────────────────────────────────────────────────
 
 	public override void _ExitTree()
 	{
