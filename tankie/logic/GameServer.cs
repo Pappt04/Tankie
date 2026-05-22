@@ -331,14 +331,14 @@ public partial class GameServer : Node
 		float bulletRadius  = gs * 0.08f;   // bullet collision radius
 
 		return $"{{" +
-		       $"\"gridSize\":{gs}" +
-		       $",\"bulletSpeed\":600.0" +
-		       $",\"bulletMaxBounces\":2" +
-		       $",\"tankBodySize\":{gs * 0.5f:F2}" +
-		       $",\"tankBodyHalfSize\":{tankBodyHalf:F2}" +
-		       $",\"muzzleOffset\":{muzzleOffset:F2}" +
-		       $",\"bulletRadius\":{bulletRadius:F2}" +
-		       $"}}";
+			   $"\"gridSize\":{gs}" +
+			   $",\"bulletSpeed\":600.0" +
+			   $",\"bulletMaxBounces\":2" +
+			   $",\"tankBodySize\":{gs * 0.5f:F2}" +
+			   $",\"tankBodyHalfSize\":{tankBodyHalf:F2}" +
+			   $",\"muzzleOffset\":{muzzleOffset:F2}" +
+			   $",\"bulletRadius\":{bulletRadius:F2}" +
+			   $"}}";
 	}
 	private static string BuildTurnTimeJson()
 	{

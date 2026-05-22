@@ -45,7 +45,7 @@ public partial class GameManager : Node2D
 			GameStarted = _gameStarted,
 			GameOver    = _gameOver,
 			OnTurn      = (_gameStarted && players.Count > 0 && turnIndex < players.Count)
-			              ? players[turnIndex].Name : "",
+						  ? players[turnIndex].Name : "",
 			Round       = GlobalState.RoundNumber,
 			Scores      = new Dictionary<string, int>(GlobalState.Scores),
 			Players     = new List<PlayerSnapshot>()
@@ -80,8 +80,12 @@ public partial class GameManager : Node2D
 
 	private System.Threading.CancellationTokenSource _turnCts;
 	private readonly Dictionary<string, int> _timeoutCounts = new Dictionary<string, int>();
-	private const int TurnTimeLimitSeconds = 30;
+	private const int TurnTimeLimitSeconds = 5;
 	private DateTime _turnStartedAt = DateTime.MinValue;
+
+	private const double RoundDurationSeconds = 10.0;
+	private double _roundTimeLeft = 0;
+	private bool _roundTimerRunning = false;
 
 	public double GetTurnTimeRemainingSeconds()
 	{
@@ -89,10 +93,12 @@ public partial class GameManager : Node2D
 		double elapsed = (DateTime.UtcNow - _turnStartedAt).TotalSeconds;
 		return Math.Max(0, TurnTimeLimitSeconds - elapsed);
 	}
+
 	private int _gridW;
 	private int _gridH;
 	private Label _overlayLabel;
 	private Label _roundLabel;
+	private Label _roundTimerLabel;
 	private Label[] _scoreLabels;
 	private CanvasLayer _canvas;
 
@@ -173,6 +179,19 @@ public partial class GameManager : Node2D
 		_roundLabel.AddThemeConstantOverride("outline_size", 5);
 		_canvas.AddChild(_roundLabel);
 
+		// Round countdown timer — top-center
+		_roundTimerLabel = new Label();
+		_roundTimerLabel.SetAnchorsPreset(Control.LayoutPreset.TopWide);
+		_roundTimerLabel.OffsetTop = 10;
+		_roundTimerLabel.OffsetBottom = 90;
+		_roundTimerLabel.HorizontalAlignment = HorizontalAlignment.Center;
+		_roundTimerLabel.AddThemeFontSizeOverride("font_size", 64);
+		_roundTimerLabel.AddThemeColorOverride("font_color", new Color(1f, 1f, 1f));
+		_roundTimerLabel.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0, 1));
+		_roundTimerLabel.AddThemeConstantOverride("outline_size", 8);
+		_roundTimerLabel.Text = "";
+		_canvas.AddChild(_roundTimerLabel);
+
 		// Player name + score HUD — top-right corner
 		Color[] teamColors = { new Color(0.25f, 0.6f, 1f), new Color(1f, 0.15f, 0.15f) };
 		string[] teamNames = { "Blue", "Red" };
@@ -226,6 +245,8 @@ public partial class GameManager : Node2D
 			{
 				_overlayLabel.Text = "";
 				_gameStarted = true;
+				_roundTimeLeft = RoundDurationSeconds;
+				_roundTimerRunning = true;
 				UpdateSnapshot();
 				BroadcastMap();
 				GameServer.Instance?.BroadcastMessage(
@@ -284,6 +305,8 @@ public partial class GameManager : Node2D
 		{
 			_gameStarted = false;
 			_gameOver = true;
+			_roundTimerRunning = false;
+			_roundTimerLabel.Text = "";
 			GlobalState.RoundNumber++;
 			string winner = players[0].Name;
 			GlobalState.Scores.TryGetValue(winner, out int prev);
@@ -300,6 +323,8 @@ public partial class GameManager : Node2D
 		{
 			_gameStarted = false;
 			_gameOver = true;
+			_roundTimerRunning = false;
+			_roundTimerLabel.Text = "";
 			GlobalState.RoundNumber++;
 			UpdateHud();
 			UpdateSnapshot();
@@ -465,6 +490,7 @@ public partial class GameManager : Node2D
 
 	private async void ResetToLobby()
 	{
+		_roundTimerRunning = false;
 		_turnCts?.Cancel();
 		GameServer.Instance?.BroadcastMessage("{\"event\": \"lobby_reset\"}");
 		if (GameServer.Instance != null)
@@ -543,11 +569,40 @@ public partial class GameManager : Node2D
 
 	public override void _Process(double delta)
 	{
+		if (_roundTimerRunning)
+		{
+			_roundTimeLeft -= delta;
+			double clamped = Math.Max(0, _roundTimeLeft);
+			_roundTimerLabel.Text = clamped.ToString("F2");
+			_roundTimerLabel.AddThemeColorOverride("font_color",
+				clamped <= 3.0 ? new Color(1f, 0.2f, 0.2f) : new Color(1f, 1f, 1f));
+
+			if (_roundTimeLeft <= 0)
+				HandleRoundTimeout();
+		}
+
 		if (_animating)
 			return;
 
 		if (GameServer.CommandQueue.TryDequeue(out GameServer.CommandData cmdData))
 			ProcessCommandAsync(cmdData.Message, cmdData.Client);
+	}
+
+	private void HandleRoundTimeout()
+	{
+		_roundTimerRunning = false;
+		_turnCts?.Cancel();
+		_gameStarted = false;
+		_gameOver = true;
+		_roundTimerLabel.Text = "";
+		GlobalState.RoundNumber++;
+		UpdateHud();
+		UpdateSnapshot();
+		_overlayLabel.AddThemeFontSizeOverride("font_size", 100);
+		_overlayLabel.Text = "Time's Up!\nDraw!\n\n[ENTER] Play again   [L] New lobby";
+		GameServer.Instance?.BroadcastMessage(
+			$"{{\"event\": \"game_over\", \"winner\": \"\", \"round\": {GlobalState.RoundNumber}, \"scores\": {BuildScoresJson()}}}"
+		);
 	}
 
 	private async void ProcessCommandAsync(string jsonMessage, WebSocket client)

@@ -16,15 +16,9 @@ Action JSON shapes:
 """
 
 import random
-from actions import ActionMove, ActionRotation, ActionShoot
+from time import sleep
+from actions import ActionMove, ActionRotation, ActionShoot, DIRECTIONS
 from game_state import GameState
-from enum import Enum
-
-class DIRECTIONS(Enum):
-    UP = 'up'
-    DOWN = 'down'
-    LEFT = 'left'
-    RIGHT = 'right'
 
 def decide_actions(state: GameState) -> list[dict]:
     """
@@ -55,5 +49,6 @@ def decide_actions(state: GameState) -> list[dict]:
     # Example: shoot (costs 1 budget – together with the move above this
     #          exhausts the 2-unit budget, so no more moves after this)
     actions.append(ActionShoot())
+    sleep(3)
 
     return actions

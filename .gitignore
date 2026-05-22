@@ -1,19 +1,18 @@
-# Godot editor state & cache
-tankie/.godot/editor/
-tankie/.godot/mono/metadata/
-tankie/.godot/mono/temp/
+# Godot generated / machine-specific (keep .import files — they define import settings)
+tankie/.godot/
 
-# Godot export / import cache
-tankie/.godot/imported/
+# C# build artifacts
+csharp-skeleton/**/bin/
+csharp-skeleton/**/obj/
 
 # Python
-python-skeleton/__pycache__/
-python-skeleton/.venv/
 **/__pycache__/
 *.pyc
 *.pyo
+python-skeleton/.venv/
 
 # C++ build artifacts
 cpp-skeleton/build/
 cpp-skeleton/compile_commands.json
 *.d
+*.o
