@@ -16,11 +16,20 @@ public partial class GameServer : Node
 	private object _clientsLock = new object();
 
 	public static ConcurrentQueue<CommandData> CommandQueue = new ConcurrentQueue<CommandData>();
+	public static Dictionary<WebSocket, string> ClientTankIds = new Dictionary<WebSocket, string>();
+	private static readonly object _tankIdsLock = new object();
+	private const int MaxQueueSize = 20;
 
 	public class CommandData
 	{
 		public WebSocket Client { get; set; }
 		public string Message { get; set; }
+	}
+
+	public static void RegisterTankId(WebSocket client, string tankId)
+	{
+		lock (_tankIdsLock)
+			ClientTankIds[client] = tankId;
 	}
 
 	public static GameServer Instance { get; private set; }
@@ -88,26 +97,28 @@ public partial class GameServer : Node
 			}
 			GD.Print("Client connected!");
 
-			byte[] buffer = new byte[1024];
+			byte[] buffer = new byte[8192];
 
 			while (webSocket.State == WebSocketState.Open)
 			{
-				WebSocketReceiveResult result = await webSocket.ReceiveAsync(
-					new ArraySegment<byte>(buffer),
-					CancellationToken.None
-				);
+				// Accumulate frames until EndOfMessage to handle large messages
+				var messageBytes = new System.IO.MemoryStream();
+				WebSocketReceiveResult result;
+				do
+				{
+					result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+					if (result.MessageType != WebSocketMessageType.Close)
+						messageBytes.Write(buffer, 0, result.Count);
+				}
+				while (!result.EndOfMessage);
 
 				if (result.MessageType == WebSocketMessageType.Close)
 				{
-					await webSocket.CloseAsync(
-						WebSocketCloseStatus.NormalClosure,
-						"",
-						CancellationToken.None
-					);
+					await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
 				}
-				else
+				else if (CommandQueue.Count < MaxQueueSize)
 				{
-					string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+					string message = Encoding.UTF8.GetString(messageBytes.ToArray());
 					CommandQueue.Enqueue(new CommandData { Client = webSocket, Message = message });
 				}
 			}
@@ -121,9 +132,9 @@ public partial class GameServer : Node
 			if (wsContext != null)
 			{
 				lock (_clientsLock)
-				{
 					_clients.Remove(wsContext.WebSocket);
-				}
+				lock (_tankIdsLock)
+					ClientTankIds.Remove(wsContext.WebSocket);
 				GD.Print("Client disconnected.");
 			}
 		}

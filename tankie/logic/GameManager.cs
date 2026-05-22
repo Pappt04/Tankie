@@ -475,6 +475,14 @@ public partial class GameManager : Node2D
 		GetTree().ChangeSceneToFile("res://scenes/menu.tscn");
 	}
 
+	public bool IsCellOccupied(Vector2I cell, Tank except)
+	{
+		foreach (var p in players)
+			if (p != except && IsInstanceValid(p) && p.GridPos == cell)
+				return true;
+		return false;
+	}
+
 	private void StartTurnTimer(string tankId)
 	{
 		_turnCts?.Cancel();
@@ -550,12 +558,24 @@ public partial class GameManager : Node2D
 		try
 		{
 			CheckWinner();
+
+			if (players.Count == 0 || turnIndex >= players.Count)
+				return;
+
 			using JsonDocument doc = JsonDocument.Parse(jsonMessage);
 			JsonElement root = doc.RootElement;
 
 			string tankId = root.TryGetProperty("tankId", out JsonElement idElement)
 				? idElement.GetString()
 				: "";
+
+			// Reject if this WebSocket is not the authorised owner of the claimed tankId
+			if (GameServer.ClientTankIds.TryGetValue(client, out string authorizedId) && authorizedId != tankId)
+			{
+				GD.Print($"Impersonation attempt: connection owns '{authorizedId}', claimed '{tankId}'");
+				return;
+			}
+
 			Player currentTank = players[turnIndex];
 
 			if (tankId != currentTank.Name)

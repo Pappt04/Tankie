@@ -149,6 +149,12 @@ public partial class Tank : CharacterBody2D
 			return;
 		}
 
+		if (GameManager.Instance?.IsCellOccupied(GridPos + moveVector, this) == true)
+		{
+			GD.Print($"Movement {direction} blocked by tank at grid {GridPos + moveVector}");
+			return;
+		}
+
 		SpawnTrackMark(direction);
 		GridPos += moveVector;
 	}
