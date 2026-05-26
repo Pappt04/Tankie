@@ -1,0 +1,55 @@
+HOW TO BUILD tankie_client ON WINDOWS
+======================================
+
+OPTION 1: MSYS2 + MinGW (recommended, closest to Linux)
+---------------------------------------------------------
+
+Step 1 — Install MSYS2
+  Download and run the installer from: https://www.msys2.org/
+  Follow the on-screen instructions and finish the setup.
+
+Step 2 — Open the MSYS2 MinGW64 shell
+  Launch "MSYS2 MinGW x64" from the Start menu (NOT the plain MSYS2 shell).
+
+Step 3 — Install required tools
+  pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake make
+
+Step 4 — Navigate to the project folder
+  cd /c/path/to/cpp-skeleton
+
+Step 5 — Build
+  mkdir build
+  cd build
+  cmake .. -G "MinGW Makefiles"
+  mingw32-make
+
+Step 6 — Run
+  ./tankie_client.exe
+
+
+OPTION 2: Visual Studio + CMake (native Windows toolchain)
+----------------------------------------------------------
+
+Step 1 — Install Visual Studio
+  Download from: https://visualstudio.microsoft.com/
+  During installation select the workload:
+    "Desktop development with C++"
+
+Step 2 — Install CMake
+  Download the Windows installer (.msi) from: https://cmake.org/download/
+  During installation check: "Add CMake to the system PATH for all users"
+
+Step 3 — Open Developer Command Prompt
+  Search "Developer Command Prompt for VS" in the Start menu and open it.
+
+Step 4 — Navigate to the project folder
+  cd C:\path\to\cpp-skeleton
+
+Step 5 — Build
+  mkdir build
+  cd build
+  cmake ..
+  cmake --build . --config Release
+
+Step 6 — Run
+  build\Release\tankie_client.exe
